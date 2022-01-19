@@ -1,38 +1,58 @@
-from flask import Flask, request, url_for, render_template
+# Library imports
+from statistics import variance
+import uvicorn
+from fastapi import FastAPI
+from Diabetes import Diabete
+import numpy as np 
 import pickle
-import pandas as pd 
-from flask_cors import CORS
+import pandas as pd
 
-app  = Flask(__name__)
-CORS(app)
+# Create the app object
 
-model = pickle.load(open("model.pk", "rb"))
+app = FastAPI()
 
-@app.route('/')
-def use_template():
-    return render_template("index.html")
+pickle_in = open("model.pk", "rb")
+classifier = pickle.load(pickle_in)
 
+# Index route, opens automatically http://127.0.0.1:8000
+@app.get("/")
+def index():
+    return {'message': 'Hello, World'}
 
-@app.route('/predict', methods=['POST', 'GET'])
-def predict():
-    input_one  = request.form.get('1',False)
-    input_two  = request.form.get('2',False)
-    input_three  = request.form.get('3',False)
-    input_four  = request.form.get('4',False)
-    input_five  = request.form.get('5',False)
-    input_six  = request.form.get('6',False)
-    input_seven  = request.form.get('7',False)
-    input_eight  = request.form.get('8',False)
+# Route with a single parameter, returns the parameter within a message 
+# Located at: http://127.0.0.1:800/AnyNameHere
 
-    setup_df = pd.DataFrame([pd.Series([input_one,input_two, input_three, input_four, input_five, input_six, input_seven, input_eight])])
-    diabetes_prediction = model.predict_proba(setup_df)
-    output = '{0:.{1}f}'.format(diabetes_prediction[0][1], 2)
-    output = str(float(output)*100)+"%"
-    if output>str(0.5):
-        return render_template('index.html', pred=f'You have the following chance of having diabetes based on the given iput.\nProbability of having Diabetes is {output}')
+@app.get('/Welcome')
+def get_name(name: str):
+    return {'Welcome to diabetes web app': f'{name}'}
+
+# Expose the prediction functionality, make a prediction from the pass JSON data and return the predicted Diabetes with the confidence
+@app.post('/predict')
+def predict_diabetes(data: Diabete):
+    data = data.dict()
+    Pregnancies = data["Pregnancies"]
+    print(Pregnancies)
+    Glucose = data["Glucose"]
+    BloodPressure = data["BloodPressure"]
+    SkinThickness = data["SkinThickness"]
+    Insulin = data["Insulin"]
+    BMI = data["BMI"]
+    DiabetesPedigreeFunction = data["DiabetesPedigreeFunction"]
+    Age = data["Age"]
+#   print(classifier.predict([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI, DiabetesPedigreeFunction,Age]]))
+    prediction = classifier.predict([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI, DiabetesPedigreeFunction,Age]])
+    if prediction[0]>(0.5):
+        prediction = "Your chance of having diabetes is very high based on this model (This is only a predictive model, please consult a certified doctor for any medical advice)"
     else:
-        return render_template('index.html', pred=f'You have low chance of diabetes which is currently considered safe (this is only an example, please consult a certified doctor for further consultation or medical advice).\n Probability of having diabetes is {output}')
+        prediction = "You have a low chance of diabetes which is currently consider safe (This is only a predictive model, please consult a certified doctor for any medical advice)"
+    return {
+        "prediction": prediction
 
+    }
+
+
+# Run the API with uvicorn
+# Will run on http://127.0.0.1:8000
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    uvicorn.run(app, host='127.0.0.1', port=8000)
