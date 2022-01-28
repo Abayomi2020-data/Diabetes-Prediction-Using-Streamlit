@@ -9,19 +9,7 @@ import pandas as pd
 # Create the app object
 app = FastAPI()
 
-@app.get('/favicon.ico', include_in_schema=False)
-
-# Index route, opens automatically http://127.0.0.1:8000
-@app.get("/")
-async def home():
-    return {'message': 'Hello, World'}
-
-# Route with a single parameter, returns the parameter within a message 
-# Located at: http://127.0.0.1:800/AnyNameHere
-
-@app.get("/Welcome/")
-async def get_name(name: str):
-    return {'Welcome to diabetes web app prediction': f'{name}'}
+@app.post('/favicon.ico', include_in_schema=False)
 
 # Expose the prediction functionality, make a prediction from the pass JSON data and return the predicted Diabetes with the confidence
 # Expose the prediction functionality, make a prediction from the pass JSON data and return the predicted Diabetes with the confidence
