@@ -1,7 +1,6 @@
 # Library imports
 import uvicorn
-from fastapi import FastAPI, Header
-from starlette.responses import FileResponse
+from fastapi import FastAPI,Form
 import numpy as np 
 import pickle
 import pandas as pd
@@ -9,24 +8,29 @@ import pandas as pd
 # Create the app object
 app = FastAPI()
 
-@app.post('/favicon.ico', include_in_schema=False)
 
-# Expose the prediction functionality, make a prediction from the pass JSON data and return the predicted Diabetes with the confidence
-# Expose the prediction functionality, make a prediction from the pass JSON data and return the predicted Diabetes with the confidence
-@app.post("/predict/")
-async def predict_diabetes(Pregnancies: float = Header("0-17"), Glucose: float = Header("0-199"), BloodPressure: float = Header("0-122"), SkinThickness: float = Header("0-99"), Insulin: float=Header("0-846"), BMI: float=Header("0-67.1"), DiabetesPedigreeFunction: float=Header("0.078-2.42"),Age: float=Header("21-81")):
-    classifier = pickle.load(open("model.pk", "rb"))
-    prediction = classifier.predict([[Pregnancies, Glucose, BloodPressure, SkinThickness,Insulin, BMI, DiabetesPedigreeFunction,Age]])
-#   print(classifier.predict([[Pregnancies, Glucose, BloodPressure, SkinThickness,Insulin, BMI, DiabetesPedigreeFunction,Age]]))
-    if prediction[0]>(0.5):
-        prediction = "Your chance of having diabetes is very high based on this model (This is only a predictive model, please consult a certified doctor for any medical advice)" 
+@app.get('/favicon.ico', include_in_schema=False)
+
+
+@app.get('/')
+async def get_root():
+    return {'message': 'Welcome to the diabetes predictions  API'}
+
+# Expose the prediction functionality, make a prediction from the pass Form data and return the predicted Diabetes with the confidence
+@app.post("/predict")
+async def predict(Pregnancies:float = Form("0-100"), Glucose: float = Form("0-1000"), BloodPressure: float = Form("0-1000"), SkinThickness: float = Form("0-200"), Insulin: float = Form("0-1000"), BMI: float = Form("0-100"), DiabetesPedigreeFunction: float = Form("0.078-50.0"), Age: float = Form("21-98")):
+    model = pickle.load(open("C:/Users/hp/Documents/Ab_ds/model.pk", "rb"))
+    prediction = model.predict([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
+    probab = model.predict_proba([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
+
+
+    if (prediction[0]>0.5):
+        prediction = "Your chance of having diabetes is very high with {} probability based on this model (This is only a predictive model, please consult a certified doctor for any medical advice)".format(probab[0][1])
     else:
-        prediction = "You have a low chance of diabetes which is currently consider safe (This is only a predictive model, please consult a certified doctor for any medical advice)"
+        prediction = "You have a low chance of diabetes with {} probability which is currently consider safe (This is only a predictive model, please consult a certified doctor for any medical advice)".format(probab[0][0])
     return {
         "prediction": prediction
-
     }
-
 
 # Run the API with uvicorn
 # Will run on http://127.0.0.1:8000
