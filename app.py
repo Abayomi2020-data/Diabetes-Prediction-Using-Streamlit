@@ -19,7 +19,7 @@ async def get_root():
 # Expose the prediction functionality, make a prediction from the pass Form data and return the predicted Diabetes with the confidence
 @app.post("/predict")
 async def predict(Pregnancies:float = Form("0-100"), Glucose: float = Form("0-1000"), BloodPressure: float = Form("0-1000"), SkinThickness: float = Form("0-200"), Insulin: float = Form("0-1000"), BMI: float = Form("0-100"), DiabetesPedigreeFunction: float = Form("0.078-50.0"), Age: float = Form("21-98")):
-    model = pickle.load(open("C:/Users/hp/Documents/Ab_ds/model.pk", "rb"))
+    model = pickle.load(open("model.pk", "rb"))
     prediction = model.predict([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
     probab = model.predict_proba([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
 
