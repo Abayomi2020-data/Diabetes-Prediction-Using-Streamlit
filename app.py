@@ -9,15 +9,15 @@ import pandas as pd
 app = FastAPI()
 
 
-@app.post('/favicon.ico/', include_in_schema=False)
+@app.get('/favicon.ico', include_in_schema=False)
 
 
-@app.post('/')
+@app.get('/')
 async def get_root():
     return {'message': 'Welcome to the diabetes predictions  API'}
 
 # Expose the prediction functionality, make a prediction from the pass Form data and return the predicted Diabetes with the confidence
-@app.post("/predict/")
+@app.post("/predict")
 async def predict(Pregnancies:float = Form("0-100"), Glucose: float = Form("0-1000"), BloodPressure: float = Form("0-1000"), SkinThickness: float = Form("0-200"), Insulin: float = Form("0-1000"), BMI: float = Form("0-100"), DiabetesPedigreeFunction: float = Form("0.078-50.0"), Age: float = Form("21-98")):
     model = pickle.load(open("C:/Users/hp/Documents/Ab_ds/model.pk", "rb"))
     prediction = model.predict([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
