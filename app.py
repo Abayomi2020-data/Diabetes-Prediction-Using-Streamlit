@@ -1,39 +1,66 @@
-# Library imports
-import uvicorn
-from fastapi import FastAPI,Form
-import numpy as np 
+import streamlit as st
+from PIL import Image 
 import pickle
-import pandas as pd
 
-# Create the app object
-app = FastAPI()
+model = pickle.load(open('model.pk', 'rb'))
 
-
-@app.get('/favicon.ico', include_in_schema=False)
-
-
-@app.get('/')
-async def get_root():
-    return {'message': 'Welcome to the diabetes predictions  API'}
-
-# Expose the prediction functionality, make a prediction from the pass Form data and return the predicted Diabetes with the confidence
-@app.post("/predict")
-async def predict(Pregnancies:float = Form("0-100"), Glucose: float = Form("0-1000"), BloodPressure: float = Form("0-1000"), SkinThickness: float = Form("0-200"), Insulin: float = Form("0-1000"), BMI: float = Form("0-100"), DiabetesPedigreeFunction: float = Form("0.078-50.0"), Age: float = Form("21-98")):
-    model = pickle.load(open("model.pk", "rb"))
-    prediction = model.predict([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
-    probab = model.predict_proba([[Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin, BMI, DiabetesPedigreeFunction, Age]])
+def run():
+    img1 = Image.open("diabetes.jpg")
+    img1 = img1.resize((156, 145))
+    st.image(img1, use_column_width=False)
+    st.title("Diabetes Prediction Using Machine Learning")
 
 
-    if (prediction[0]>0.5):
-        prediction = "Your chance of having diabetes is very high with {} probability based on this model (This is only a predictive model, please consult a certified doctor for any medical advice)".format(probab[0][1])
-    else:
-        prediction = "You have a low chance of diabetes with {} probability which is currently consider safe (This is only a predictive model, please consult a certified doctor for any medical advice)".format(probab[0][0])
-    return {
-        "prediction": prediction
-    }
+    ## Full Name
+    fn = st.text_input("Full Name")
 
-# Run the API with uvicorn
-# Will run on http://127.0.0.1:8000
+    ## Hospital  ID
+    Hospital_id = st.text_input("Hospital ID")
 
-if __name__ == '__main__':
-    uvicorn.run(app, host='127.0.0.1', port=8000)
+    ## Number Pregnancies(1-100)
+    preg_display = st.number_input("Number Pregnancies(0-100)", value=0)
+
+    ## Glucose level
+    glucose_level = st.number_input("Glucose Level(0-1000)", value=0)
+
+    ## Blood Pressure
+    blood_pre = st.number_input("Bood Pressure(0-1000)", value=0)
+
+    ## Skin Thickness 
+    skin_thickness = st.number_input("Skin Thickness(0-200)", value=0)
+
+    ## Insulin
+    insulin = st.number_input("Insulin(0-1000)", value=0)
+    
+    ## BMI
+    bmi = st.number_input("BMI(0-100)", value=0)
+
+    ## Diabetespedigreefunction 
+    dia = st.number_input("Diabetespedigreefunction(0.078-50.0)", value=0)
+
+    ## Age
+    age = st.number_input("Age(21-98)", value=0)
+
+
+    if st.button("Submit"):
+        features = [[preg_display, glucose_level, blood_pre, skin_thickness, insulin, bmi, dia, age]]
+        print(features)
+        prediction = model.predict(features)
+        lc =[str(i) for i in prediction]
+        ans = int("".join(lc))
+        if ans == 1:
+            st.error(
+                "Hello: " + fn + " || "
+                "Hospital ID: " + Hospital_id + " || "
+                "According to your input result, you have high chance of having diabetes" + "||"
+                "This is just a predictive model, try to see a certified doctor for further consultation or medical advice"
+            )
+        else:
+            st.success(
+                "Hello: " + fn + " || "
+                "Hospital ID: " + Hospital_id + " || "
+                "According to your input result, you have low chance of having diabetes, which is consider safe" + "||"
+                "This is just a predictive model, try to see a certified doctor for further consultation or medical advice"
+            )
+
+run()
